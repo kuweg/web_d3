@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <title>Canvas Task</title>
+    <link rel="stylesheet" href="css/style.css">
+  </head>
+  <body>
+    <header class = "head">Solar System Task</header>
+    
+    <div class="task">
+        <div class="task">
+            <input class="hide" id="hd-1" type="checkbox">
+            <label for="hd-1">Нажмите для прочтения задания!</label>
+            <div>
+                В этом задании вам потребуется расположить планеты (включая Плутон и Солнце) в правильном астрономическом порядке <br>
+                От вас требуется использовать названия планет на англйиском языке: <br>
+                В списке предоставлены планеты и их веса в у.е <br>
+                -Уран 3 у.е. <br>
+                -Марс 2 у.е.<br>
+                -Сатурн 5 у.е.<br>
+                -Венера 3 у.е.<br>
+                -Юпитер 6 у.е.<br>
+                -Плутон 1 у.е.<br>
+                -Земля 4 у.е.<br>
+                -Солнце 10 у.е.<br>
+                -Меркурий 1 у.е.<br>
+                -Нептун 3 у.е.<br>
+                Порядок требуется определить самостоятельно!
+         
+            </div>
+    </div>
+    </div>
+    <main class="worspace">
+      <div class="item">
+        <div class="vertical-list">
+          <div class="vertical-list__item item">
+            <span class="item__title">HTML</span>
+            <div class="item__inner js-editor-html"></div>
+          </div>
+          <div class="vertical-list__item item">
+            <span class="item__title">JS (D3)</span>
+            <div class="item__inner js-editor-js"></div>
+          </div>
+          <div class="vertical-list__item item">
+            <span class="item__title">Compared result</span>
+            <div class="item__inner js-compared-result"></div>
+          </div>
+        </div>
+      </div>
+      <div class="item ">
+        <div class="vertical-list">
+          <div class="vertical-list__item item">
+            <span class="item__title">Превью</span>
+            <div class="item__inner frame-wrapper" >
+              <iframe class="frame js-frame-preview" style="background-image:url(image/back.jpg)"></iframe>
+            </div>
+          </div>
+          <div class="vertical-list__item item">
+            <span class="item__title result">Результат</span>
+            <div class="item__inner frame-wrapper js-frame-containter"  style="background-image:url(image/back.jpg)"></div>
+          </div>
+          <div class="item">
+            <button class="button js-compare">Сравнить</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="lib/data/initials.js"></script>
+    <script src="lib/ace/ace.js"></script>
+    <script src="lib/js-imagediff/js/imagediff.js"></script>
+    <script src="lib/rasterizeHTML.allinone.js"></script>
+    <script>
+      const resultMsgEl = document.querySelector('.result');
+      
+      window.check = function (previewEl, resultEl, container) {
+        const computedStyle = getComputedStyle(container);
+        
+        const canvas1 = document.createElement('canvas');
+        canvas1.width = Number.parseInt(computedStyle.width);
+        canvas1.height = Number.parseInt(computedStyle.height);
+        const canvas2 = document.createElement('canvas');
+        canvas2.width = Number.parseInt(computedStyle.width);
+        canvas2.height = Number.parseInt(computedStyle.height);
+        
+        const previewCanvasPromise = rasterizeHTML.drawDocument(previewEl, canvas1);
+        const resultCanvasPromise = rasterizeHTML.drawDocument(resultEl, canvas2);
+        
+        Promise.all([previewCanvasPromise, resultCanvasPromise])
+        .then(function([previewCanvas, resultCanvas]) {
+          const diff = imagediff.diff(previewCanvas.image, resultCanvas.image);
+          const equal = imagediff.equal(previewCanvas.image, resultCanvas.image);
+          
+          const canvas = imagediff.createCanvas();
+          canvas.width = Number.parseInt(computedStyle.width);
+          canvas.height = Number.parseInt(computedStyle.height);
+          const context = canvas.getContext('2d');
+          context.putImageData(diff, 0, 0);
+
+          container.innerHTML = '';
+          container.appendChild(canvas);
+
+          
+          if (equal) {
+            resultMsgEl.classList.add('result--correct');
+            resultMsgEl.classList.remove('result--wrong');
+          } else {
+            resultMsgEl.classList.add('result--wrong');
+            resultMsgEl.classList.remove('result--correct');
+          }
+        });
+      };
+    </script>
+    <script>
+      const htmlEditor = ace.edit(document.querySelector('.js-editor-html'));
+      htmlEditor.session.setMode('ace/mode/html');
+      htmlEditor.session.setTabSize(2);
+      htmlEditor.setValue(window.initialCode.initialHTML);
+      htmlEditor.clearSelection();
+
+      const jsEditor = ace.edit(document.querySelector('.js-editor-js'));
+      jsEditor.session.setMode('ace/mode/javascript');
+      jsEditor.setValue(window.initialCode.initialJS);
+      jsEditor.clearSelection();
+
+      const comparedResultEl = document.querySelector('.js-compared-result');
+
+      const compareBtn = document.querySelector('.js-compare');
+      
+      const getIframe = () => {
+        const frame = document.createElement('iframe');
+        frame.classList.add('frame');
+        return frame;
+      };
+
+     
+      const previewIframe = document.querySelector('.js-frame-preview');
+      const previewIframeDoc = previewIframe.contentDocument;
+
+      const resultScript = previewIframeDoc.createElement('script');
+      resultScript.textContent = window.initialCode.resultJS;
+      previewIframeDoc.write(window.initialCode.initialHTML);
+      previewIframeDoc.addEventListener('DOMContentLoaded', () => {
+      previewIframeDoc.body.appendChild(resultScript);
+      })
+      previewIframeDoc.close();
+     
+
+      const frameContainer = document.querySelector('.js-frame-containter');
+
+      const makeChanges = () => {
+        frameContainer.innerHTML = '';
+        
+        const frame = getIframe();
+        frameContainer.appendChild(frame);
+
+        const doc = frame.contentDocument;
+
+        compareBtn.onclick = () => {
+          window.check(previewIframeDoc, doc, comparedResultEl);
+        };
+        
+        const userCode = jsEditor.getValue();
+
+        const script = doc.createElement('script');
+        script.textContent = userCode;
+        
+        doc.write(htmlEditor.getValue());
+        doc.addEventListener('DOMContentLoaded', () => {
+          doc.body.appendChild(script);
+        })
+        doc.close();
+      };
+      makeChanges();
+      
+      let interval = null;
+      const onChange = () => {
+        clearInterval(interval);
+        interval = setTimeout(() => {
+          makeChanges();
+        }, 1000);
+      }
+      jsEditor.getSession().on('change', onChange);
+      htmlEditor.getSession().on('change', onChange);
+      </script>
+  </body>
+</html>
