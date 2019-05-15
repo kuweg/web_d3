@@ -1,0 +1,31 @@
+{
+  "name": "web_d3",
+  "version": "1.0.0",
+  "description": "my web project",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "ace-builds": "^1.4.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kuweg/web_d3.git"
+  },
+  "keywords": [
+    "test",
+    "project",
+    "web"
+  ],
+  "author": "kuweg",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kuweg/web_d3/issues"
+  },
+  "homepage": "https://github.com/kuweg/web_d3#readme"
+}
